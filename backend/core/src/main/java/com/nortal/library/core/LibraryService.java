@@ -60,12 +60,18 @@ public class LibraryService {
     if (book.isEmpty()) {
       return ResultWithNext.failure();
     }
-
     Book entity = book.get();
     entity.setLoanedTo(null);
     entity.setDueDate(null);
     String nextMember =
-        entity.getReservationQueue().isEmpty() ? null : entity.getReservationQueue().get(0);
+        entity.getReservationQueue().isEmpty() ? null : entity.getReservationQueue().getFirst();
+
+    if (nextMember != null) {
+      Result nextMemberReserved = borrowBook(bookId, nextMember);
+      if (nextMemberReserved.ok()) {
+        cancelReservation(bookId, nextMember);
+      }
+    }
     bookRepository.save(entity);
     return ResultWithNext.success(nextMember);
   }
