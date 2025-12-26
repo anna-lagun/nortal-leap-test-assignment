@@ -91,7 +91,14 @@ public class LibraryService {
     }
 
     Book entity = book.get();
-    entity.getReservationQueue().add(memberId);
+    if (entity.getLoanedTo().equals(memberId)) {
+      return Result.failure("ALREADY_LOANED");
+    }
+    List<String> queue = entity.getReservationQueue();
+    if (queue.contains(memberId)) {
+      return Result.failure("ALREADY_RESERVED");
+    }
+    queue.add(memberId);
     bookRepository.save(entity);
     return Result.success();
   }
