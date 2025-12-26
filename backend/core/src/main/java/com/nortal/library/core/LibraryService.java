@@ -91,7 +91,12 @@ public class LibraryService {
     }
 
     Book entity = book.get();
-    if (entity.getLoanedTo().equals(memberId)) {
+
+    if (entity.getLoanedTo() == null) {
+      borrowBook(bookId, memberId);
+      bookRepository.save(entity);
+      return Result.success();
+    } else if (entity.getLoanedTo().equals(memberId)) {
       return Result.failure("ALREADY_LOANED");
     }
     List<String> queue = entity.getReservationQueue();
@@ -99,6 +104,7 @@ public class LibraryService {
       return Result.failure("ALREADY_RESERVED");
     }
     queue.add(memberId);
+
     bookRepository.save(entity);
     return Result.success();
   }
