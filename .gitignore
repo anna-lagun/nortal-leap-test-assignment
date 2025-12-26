@@ -37,3 +37,8 @@ backend/api/spy.log
 # Internal-only
 internal/
 backend/hidden-tests/
+
+# Build folders
+/backend/api/build/
+/backend/core/build/
+/backend/persistence/build/

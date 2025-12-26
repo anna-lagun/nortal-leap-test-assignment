@@ -4,12 +4,15 @@ import com.nortal.library.core.domain.Book;
 import com.nortal.library.core.domain.Member;
 import com.nortal.library.core.port.BookRepository;
 import com.nortal.library.core.port.MemberRepository;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+
 public class LibraryService {
+
   private static final int MAX_LOANS = 5;
   private static final int DEFAULT_LOAN_DAYS = 14;
 
@@ -20,6 +23,7 @@ public class LibraryService {
     this.bookRepository = bookRepository;
     this.memberRepository = memberRepository;
   }
+
 
   public Result borrowBook(String bookId, String memberId) {
     Optional<Book> book = bookRepository.findById(bookId);
@@ -32,7 +36,19 @@ public class LibraryService {
     if (!canMemberBorrow(memberId)) {
       return Result.failure("BORROW_LIMIT");
     }
+
+
     Book entity = book.get();
+
+    String loaned = entity.getLoanedTo();
+
+    if (loaned != null) {
+      if (loaned.equals(memberId)) {
+        return Result.failure("ALREADY_LOANED");
+      }
+      return Result.failure("BOOK_LOANED");
+    }
+
     entity.setLoanedTo(memberId);
     entity.setDueDate(LocalDate.now().plusDays(DEFAULT_LOAN_DAYS));
     bookRepository.save(entity);
