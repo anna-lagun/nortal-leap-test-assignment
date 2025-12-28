@@ -33,20 +33,11 @@ public class LibraryService {
     if (!memberRepository.existsById(memberId)) {
       return Result.failure("MEMBER_NOT_FOUND");
     }
-    if (!canMemberBorrow(memberId)) {
-      return Result.failure("BORROW_LIMIT");
-    }
-
-
     Book entity = book.get();
 
-    String loaned = entity.getLoanedTo();
-
-    if (loaned != null) {
-      if (loaned.equals(memberId)) {
-        return Result.failure("ALREADY_LOANED");
-      }
-      return Result.failure("BOOK_LOANED");
+    Optional<Result> failure = validateBorrowEligibility(memberId, entity);
+    if (failure.isPresent()) {
+      return failure.get();
     }
 
     entity.setLoanedTo(memberId);
@@ -60,6 +51,9 @@ public class LibraryService {
     if (book.isEmpty()) {
       return ResultWithNext.failure();
     }
+    if (!memberRepository.existsById(memberId)) {
+      return ResultWithNext.failure();
+    }
 
     Book entity = book.get();
     if (!entity.getLoanedTo().equals(memberId)) {
@@ -68,17 +62,22 @@ public class LibraryService {
 
     entity.setLoanedTo(null);
     entity.setDueDate(null);
-    String nextMember =
-        entity.getReservationQueue().isEmpty() ? null : entity.getReservationQueue().getFirst();
 
-    if (nextMember != null) {
-      Result nextMemberReserved = borrowBook(bookId, nextMember);
+    Optional<String> nextMember = findNextMember(entity);
+
+    if (nextMember.isPresent()) {
+      String memberToBorrow = nextMember.get();
+      Result nextMemberReserved = borrowBook(bookId, memberToBorrow);
       if (nextMemberReserved.ok()) {
-        cancelReservation(bookId, nextMember);
+        cancelReservation(bookId, memberToBorrow);
       }
     }
+
+//    String nextMember =
+//        entity.getReservationQueue().isEmpty() ? null : entity.getReservationQueue().getFirst();
+
     bookRepository.save(entity);
-    return ResultWithNext.success(nextMember);
+    return ResultWithNext.success(nextMember.orElse(null));
   }
 
   public Result reserveBook(String bookId, String memberId) {
@@ -127,17 +126,46 @@ public class LibraryService {
     return Result.success();
   }
 
-  public boolean canMemberBorrow(String memberId) {
-    if (!memberRepository.existsById(memberId)) {
-      return false;
+  public Optional<Result> validateBorrowEligibility(String memberId, Book book) {
+
+    if (hasMemberReachedBorrowLimit(memberId)) {
+      return Optional.of(Result.failure("BORROW_LIMIT"));
     }
+
+    String loaned = book.getLoanedTo();
+
+    if (loaned == null) {
+      return Optional.empty();
+    }
+
+    if (loaned.equals(memberId)) {
+      return Optional.of(Result.failure("ALREADY_LOANED"));
+    }
+
+    return Optional.of(Result.failure("BOOK_LOANED"));
+  }
+
+  public boolean hasMemberReachedBorrowLimit(String memberId) {
     int active = 0;
     for (Book book : bookRepository.findAll()) {
       if (memberId.equals(book.getLoanedTo())) {
         active++;
       }
     }
-    return active < MAX_LOANS;
+    return active >= MAX_LOANS;
+  }
+
+  public Optional<String> findNextMember(Book book) {
+    List<String> reservationQueue = book.getReservationQueue();
+    for (String nextMemberId : reservationQueue) {
+      if (!memberRepository.existsById(nextMemberId)) {
+        return Optional.empty();
+      }
+      if (!hasMemberReachedBorrowLimit(nextMemberId)) {
+        return Optional.of(nextMemberId);
+      }
+    }
+    return Optional.empty();
   }
 
   public List<Book> searchBooks(String titleContains, Boolean availableOnly, String loanedTo) {
