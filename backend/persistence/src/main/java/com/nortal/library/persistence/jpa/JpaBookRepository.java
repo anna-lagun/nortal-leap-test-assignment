@@ -4,7 +4,6 @@ import com.nortal.library.core.domain.Book;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface JpaBookRepository extends JpaRepository<Book, String> {
     List<Book> findByLoanedTo(String loanedTo);

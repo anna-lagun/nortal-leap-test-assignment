@@ -73,9 +73,6 @@ public class LibraryService {
       }
     }
 
-//    String nextMember =
-//        entity.getReservationQueue().isEmpty() ? null : entity.getReservationQueue().getFirst();
-
     bookRepository.save(entity);
     return ResultWithNext.success(nextMember.orElse(null));
   }
@@ -152,13 +149,6 @@ public class LibraryService {
 
   public boolean hasMemberReachedBorrowLimit(String memberId) {
     List<Book> loanedBooksByMember = bookRepository.findByLoanedTo(memberId);
-
-//    int active = 0;
-//    for (Book book : bookRepository.findAll()) {
-//      if (memberId.equals(book.getLoanedTo())) {
-//        active++;
-//      }
-//    }
     return loanedBooksByMember.size() >= MAX_LOANS;
   }
 
