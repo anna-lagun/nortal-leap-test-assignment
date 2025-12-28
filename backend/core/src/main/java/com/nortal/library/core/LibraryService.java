@@ -146,13 +146,15 @@ public class LibraryService {
   }
 
   public boolean hasMemberReachedBorrowLimit(String memberId) {
-    int active = 0;
-    for (Book book : bookRepository.findAll()) {
-      if (memberId.equals(book.getLoanedTo())) {
-        active++;
-      }
-    }
-    return active >= MAX_LOANS;
+    List<Book> loanedBooksByMember = bookRepository.findByLoanedTo(memberId);
+
+//    int active = 0;
+//    for (Book book : bookRepository.findAll()) {
+//      if (memberId.equals(book.getLoanedTo())) {
+//        active++;
+//      }
+//    }
+    return loanedBooksByMember.size() >= MAX_LOANS;
   }
 
   public Optional<String> findNextMember(Book book) {

@@ -7,6 +7,8 @@ import java.util.Optional;
 public interface BookRepository {
   Optional<Book> findById(String id);
 
+  List<Book> findByLoanedTo(String loanedTo);
+
   List<Book> findAll();
 
   Book save(Book book);
