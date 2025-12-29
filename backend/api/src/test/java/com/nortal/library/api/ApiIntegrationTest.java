@@ -131,6 +131,21 @@ class ApiIntegrationTest {
   }
 
   @Test
+  void bookNotLoanedByNonexistentMember() {
+    ResultResponse borrow =
+            rest.postForObject(url("/api/borrow"), new BorrowRequest("b1", "noMember"), ResultResponse.class);
+    assertThat(borrow.ok()).isFalse();
+
+    BookResponse book =
+            rest.getForObject(url("/api/books"), BooksResponse.class).items().stream()
+                    .filter(b -> b.id().equals("b1"))
+                    .findFirst()
+                    .orElse(null);
+    assertThat(book).isNotNull();
+    assertThat(book.loanedTo()).isNull();
+  }
+
+  @Test
   void borrowAndReturnHappyPath() {
     ResultResponse borrow =
         rest.postForObject(url("/api/borrow"), new BorrowRequest("b1", "m1"), ResultResponse.class);
