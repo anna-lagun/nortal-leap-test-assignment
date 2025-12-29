@@ -4,12 +4,10 @@ import com.nortal.library.core.domain.Book;
 import com.nortal.library.core.domain.Member;
 import com.nortal.library.core.port.BookRepository;
 import com.nortal.library.core.port.MemberRepository;
-
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-
 
 public class LibraryService {
 
@@ -23,7 +21,6 @@ public class LibraryService {
     this.bookRepository = bookRepository;
     this.memberRepository = memberRepository;
   }
-
 
   public Result borrowBook(String bookId, String memberId) {
     Optional<Book> book = bookRepository.findById(bookId);
@@ -66,10 +63,10 @@ public class LibraryService {
     Optional<String> nextMember = findNextMember(entity);
 
     if (nextMember.isPresent()) {
-      String memberToBorrow = nextMember.get();
-      Result nextMemberReserved = borrowBook(bookId, memberToBorrow);
+      String nextMemberId = nextMember.get();
+      Result nextMemberReserved = borrowBook(bookId, nextMemberId);
       if (nextMemberReserved.ok()) {
-        cancelReservation(bookId, memberToBorrow);
+        cancelReservation(bookId, nextMemberId);
       }
     }
 
